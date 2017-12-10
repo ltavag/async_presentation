@@ -12,35 +12,44 @@ def accept(sock):
     conn.setblocking(False)
     selector.register(conn, EVENT_READ, lambda: read(conn))
 
+def inline_callback(gen):
+    def wrapper(*args):
+        print(gen.__class__)
+        running = gen(*args)
+        x = running.__next__()
+
+        def cb(x):
+            try:
+                running.send(x)
+            except StopIteration:
+                pass
+
+        if isinstance(x, AsyncHTTPRequest):
+            x.cb = cb
+            x()
+
+    return wrapper
+
 RESULT = b'HTTP/1.0 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: 13\r\nConnection: close\r\n\r\nGot a result\n'
+@inline_callback
 def read(conn):
     data = conn.recv(1024)  # Should be ready
-    def cb(x):
-        try:
+    try:
+        if data:
+            x = yield lookup()
             conn.send(RESULT)
-        except Exception as e:
-            print(e)
-            pass
-        finally:
-            selector.unregister(conn)
-            conn.close()
+    finally:
+        selector.unregister(conn)
+        conn.close()
 
-    if data:
-        #lookup(cb)
-        bad_lookup(cb)
-
-def bad_lookup(cb):
-    request = urllib.request.Request('http://blockchain.info/rawblock/000000000000000000165fab1959a2575748085b635d867f4840f888d8f24e76')
-    cb(urllib.request.urlopen(request).read())
-
-def lookup(cb):
+def lookup():
     url = 'http://blockchain.info/rawblock/000000000000000000165fab1959a2575748085b635d867f4840f888d8f24e76'
-    request = AsyncHTTPRequest(url, selector, cb)
-    request()
+    request = AsyncHTTPRequest(url, selector)
+    return request
 
 def listen_forever():
     sock = socket.socket()
-    sock.bind(('localhost', 1234))
+    sock.bind(('localhost', 1235))
     sock.setblocking(False)
     sock.listen(100)
     selector.register(sock.fileno(), EVENT_READ, lambda:accept(sock))

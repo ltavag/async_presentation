@@ -9,8 +9,8 @@ class AsyncHTTPRequest():
 
     def __init__(self,
                     url,
-                    cb,
-                    selector):
+                    selector,
+                    cb = None):
         self.cb = cb
         match = URL_REG.match(url)
         self.host = match.groups()[0]
