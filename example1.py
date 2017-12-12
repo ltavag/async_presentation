@@ -1,9 +1,12 @@
 import traceback
 
+
 def foo():
-  bar()
+    bar()
+
 
 def bar():
-  traceback.print_stack()
+    traceback.print_stack()
+
 
 foo()
