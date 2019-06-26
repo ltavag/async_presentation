@@ -45,7 +45,3 @@ A different programming paradigm that offers high concurrency with low overhead 
 
     * Exception handling 
 
-#### Questions ?
-
-
-#### VOTEM IS HIRING PYTHON DEVS
